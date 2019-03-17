@@ -1,54 +1,64 @@
 package com.example.android.s4s;
 
-import android.content.ContentResolver;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
-import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
-import android.os.Handler;
-import android.os.StrictMode;
-import android.provider.MediaStore;
-import android.support.annotation.NonNull;
 import android.support.design.widget.TextInputLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
-import android.webkit.MimeTypeMap;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.support.v7.app.AlertDialog;
+import android.content.DialogInterface;
+import android.widget.RatingBar;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
-import com.google.android.gms.common.GooglePlayServicesRepairableException;
-import com.google.android.gms.location.places.Place;
-import com.google.android.gms.location.places.ui.PlacePicker;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+
+import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
+import com.google.android.gms.common.GooglePlayServicesRepairableException;
+import com.google.android.gms.location.places.ui.PlacePicker;
+import com.google.android.gms.location.places.Place;
+
+import com.google.android.gms.auth.api.signin.internal.Storage;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.String;
+import java.math.BigInteger;
+import java.net.URI;
+import java.net.URL;
+import android.content.ContentResolver;
+import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import android.media.Image;
+import android.net.Uri;
+import android.os.Environment;
+import android.os.Handler;
+import android.os.StrictMode;
+import android.provider.MediaStore;
+import android.support.annotation.NonNull;
+import android.util.Log;
+import android.webkit.MimeTypeMap;
+
+import com.google.android.gms.location.places.Place;
 
 public class Seller extends AppCompatActivity {
     private static final String TAG = "FragmentActivity";
@@ -57,8 +67,10 @@ public class Seller extends AppCompatActivity {
     Button  button;
     AlertDialog.Builder builder;
     Intent I;
+    RatingBar rb;
+
     EditText editText, editText2, editText3, editText4, editText5, editText7, editText8, editText9, editText10,editText11;
-    TextInputLayout name_layout, author_layout, phone1_layout, edition_layout, price_layout,publisher_layout,
+    TextInputLayout name_layout, author_layout, phone1_layout, edition_layout, price_layout,publisher_layout,rating_layout,
             locality_layout, district_layout, state_layout, pincode_layout, upload_layout,upload1_layout;
     private DatabaseReference book_name, book_author, book_edition, book_publisher, book_price, book_rating,
             sel_society, sel_district, sel_pincode, sel_phn, sel_state,flag;
@@ -66,13 +78,13 @@ public class Seller extends AppCompatActivity {
     private FirebaseDatabase databasebook;
     private FirebaseAuth mAuth;
 
-    private static int index = 0;
+    private static int index=0;
     ImageView viewImage,viewImage2;
     Button b,b2;
     ////// java class for adding profile photo
     private Uri selectedImage,selectedImage1;
 
-    int PLACE_PICKER_REQUEST = 5;
+    int PLACE_PICKER_REQUEST=5;
 
     ///to store image
 
@@ -83,6 +95,10 @@ public class Seller extends AppCompatActivity {
     private StorageReference storageReference;
 
     private DatabaseReference databaseReference;
+
+    Bitmap bmap ;
+    Bitmap bmap1;
+    Bitmap myLogo;
 
     FirebaseUser currentFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
     //
@@ -96,6 +112,7 @@ public class Seller extends AppCompatActivity {
     int i1;
     String key;
     TextView tvplace;
+    float rat=-1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -113,6 +130,7 @@ public class Seller extends AppCompatActivity {
         //textView4 = (Button) findViewById(R.id.textView4);
         //textView5 = (Button) findViewById(R.id.textView5);
         button = (Button) findViewById(R.id.button);
+        rb=(RatingBar)findViewById(R.id.ratingBar2);
         editText = (EditText) findViewById(R.id.editText);
         editText2 = (EditText) findViewById(R.id.editText2);
         editText3 = (EditText) findViewById(R.id.editText3);
@@ -135,10 +153,20 @@ public class Seller extends AppCompatActivity {
         pincode_layout = findViewById(R.id.layout_pincode);
         upload_layout = findViewById(R.id.layout_upload1);
         upload1_layout = findViewById(R.id.layout_upload2);
-        tvplace = (TextView) findViewById(R.id.tvplace);
+        rating_layout=findViewById(R.id.layout_rating);
+        tvplace=(TextView)findViewById(R.id.tvplace);
 
 
-        int i = index;
+        //3c2
+        final ImageView test = (ImageView) findViewById (R.id.frontpic); //image stored here
+        final ImageView test1 = (ImageView) findViewById (R.id.backpic);
+        bmap = ((BitmapDrawable) test.getDrawable ()).getBitmap ();
+        bmap1 = ((BitmapDrawable) test1.getDrawable ()).getBitmap ();
+        Drawable myDrawable = getResources ().getDrawable (R.drawable.bookstoreicon);
+        myLogo = ((BitmapDrawable) myDrawable).getBitmap ();
+
+
+        int i=index;
         index++;
         databasebook=FirebaseDatabase.getInstance();
         mAuth = FirebaseAuth.getInstance();
@@ -159,6 +187,7 @@ public class Seller extends AppCompatActivity {
         sel_state = databasebook.getReference("Seller").child(currentFirebaseUser.getUid()).child(String.valueOf(key)).child("State");
         sel_phn = databasebook.getReference("Seller").child(currentFirebaseUser.getUid()).child(String.valueOf(key)).child("Contact details");
         flag = databasebook.getReference("Seller").child(currentFirebaseUser.getUid()).child(String.valueOf(key)).child("Flag");
+        book_rating=databasebook.getReference("Seller").child(currentFirebaseUser.getUid()).child(String.valueOf(key)).child("Rating");
 
         //below content is for placing backbutton in th toolbar
         if(getSupportActionBar()!=null){
@@ -181,6 +210,7 @@ public class Seller extends AppCompatActivity {
         viewImage2 = (ImageView) findViewById (R.id.backpic);
 
 
+        //get and set image
         b.setOnClickListener (new View.OnClickListener () {
             @Override
             public void onClick(View v) {
@@ -193,6 +223,14 @@ public class Seller extends AppCompatActivity {
             public void onClick(View v) {
                 i1=2;
                 selectImage1 ();
+            }
+        });
+
+        //get and set rating
+        rb.setOnRatingBarChangeListener(new RatingBar.OnRatingBarChangeListener() {
+            @Override
+            public void onRatingChanged(RatingBar ratingBar, float rating, boolean fromUser) {
+                rat=rating;
             }
         });
 
@@ -249,6 +287,8 @@ public class Seller extends AppCompatActivity {
                     phone1_layout.setError("phone no is wrong");
 
                 }
+
+
 
 
                 if(!editText.getText().toString().equals("") && !editText2.getText().toString().equals("") &&
@@ -332,17 +372,13 @@ public class Seller extends AppCompatActivity {
         sel_pincode.setValue(editText9.getText().toString());
         sel_state.setValue(editText10.getText().toString());
         sel_phn.setValue(editText11.getText().toString());
+        //rb.setRating(rat);
+        book_rating.setValue(rb.getRating());
         String value = "0";
         flag.setValue(value);
 
 
-        //3c2
-        final ImageView test = (ImageView) findViewById (R.id.frontpic); //image stored here
-        final ImageView test1 = (ImageView) findViewById (R.id.backpic);
-        final Bitmap bmap = ((BitmapDrawable) test.getDrawable ()).getBitmap ();
-        final Bitmap bmap1 = ((BitmapDrawable) test1.getDrawable ()).getBitmap ();
-        Drawable myDrawable = getResources ().getDrawable (R.drawable.bookstoreicon);
-        final Bitmap myLogo = ((BitmapDrawable) myDrawable).getBitmap ();
+
 
 
         if (bmap.sameAs (myLogo)) {
@@ -450,7 +486,7 @@ public class Seller extends AppCompatActivity {
 
                     intent.putExtra (MediaStore.EXTRA_OUTPUT, Uri.fromFile (f));
 
-                    startActivityForResult(intent, 3);
+                    startActivityForResult (intent, 3);
 
                 } else if (options[item].equals ("Choose from Gallery")) {
 
@@ -480,11 +516,11 @@ public class Seller extends AppCompatActivity {
 
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode == PLACE_PICKER_REQUEST) {
+        if(requestCode==PLACE_PICKER_REQUEST) {
             if (resultCode == RESULT_OK) {
 
                 Place place = PlacePicker.getPlace(data, this);
-                String address = String.format("Place: %s", place.getAddress());
+                String address =String.format("Place: %s",place.getAddress());
                 Toast.makeText(this, address, Toast.LENGTH_SHORT).show();
                 tvplace.setText(place.getAddress());
             }
@@ -717,7 +753,7 @@ public class Seller extends AppCompatActivity {
 
         if(selectedImage != null)
         {
-            StorageReference mstorage = storageReference.child(currentFirebaseUser.getUid() + String.valueOf(key) + "." + getFileextension(selectedImage));
+            StorageReference mstorage = storageReference.child (currentFirebaseUser.getUid()+String.valueOf(key)+"."+getFileextension (selectedImage));
 
             mstorage.putFile (selectedImage).addOnSuccessListener (new OnSuccessListener <UploadTask.TaskSnapshot> () {
                 @Override
@@ -728,7 +764,7 @@ public class Seller extends AppCompatActivity {
                         public void run() {
                             Toast.makeText (Seller.this,"image uploaded",Toast.LENGTH_SHORT).show ();
                         }
-                    }, 3000);
+                    },3000);
 
 
 
@@ -762,7 +798,7 @@ public class Seller extends AppCompatActivity {
 
         if(selectedImage1 != null)
         {
-            StorageReference mstorage = storageReference.child(currentFirebaseUser.getUid() + String.valueOf(key) + "." + getFileextension(selectedImage1));
+            StorageReference mstorage = storageReference.child (currentFirebaseUser.getUid()+String.valueOf(key)+"."+getFileextension (selectedImage1));
 
             mstorage.putFile (selectedImage1).addOnSuccessListener (new OnSuccessListener <UploadTask.TaskSnapshot> () {
                 @Override
@@ -771,7 +807,7 @@ public class Seller extends AppCompatActivity {
                     handler.postDelayed (new Runnable () {
                         @Override
                         public void run() {
-                            Toast.makeText(Seller.this, "image2 uploaded", Toast.LENGTH_SHORT).show();
+                            Toast.makeText (Seller.this,"image2 uploaded",Toast.LENGTH_SHORT).show ();
                         }
                     },5000);
 
@@ -801,17 +837,18 @@ public class Seller extends AppCompatActivity {
     }
 
     public void chooseplace(View view) {
-        PlacePicker.IntentBuilder builder1 = new PlacePicker.IntentBuilder();
-        try {
+        PlacePicker.IntentBuilder builder1= new PlacePicker.IntentBuilder();
+        try{
             // Intent  in = builder1.build((Activity) getApplicationContext());
 
-            startActivityForResult(builder1.build(Seller.this), PLACE_PICKER_REQUEST);
-        } catch (GooglePlayServicesRepairableException e) {
-            Log.e(TAG, "onClick: GooglePlayServicesRepairableException: " + e.getMessage());
+            startActivityForResult(builder1.build(Seller.this),PLACE_PICKER_REQUEST);
+        }catch (GooglePlayServicesRepairableException e){
+            Log.e(TAG, "onClick: GooglePlayServicesRepairableException: "+ e.getMessage());
             e.printStackTrace();
-        } catch (GooglePlayServicesNotAvailableException e) {
-            Log.e(TAG, "onClick: GooglePlayServicesNotAvailableException: " + e.getMessage());
+        }catch (GooglePlayServicesNotAvailableException e) {
+            Log.e(TAG, "onClick: GooglePlayServicesNotAvailableException: "+ e.getMessage());
         }
+
 
 
     }

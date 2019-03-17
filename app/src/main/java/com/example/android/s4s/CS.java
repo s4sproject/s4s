@@ -83,6 +83,7 @@ public class CS extends Fragment {
                 for(DataSnapshot ds: dataSnapshot.getChildren())
                 {
                     for(DataSnapshot ds1: ds.getChildren()) {
+
                         Log.d("fuck", ds.toString());
                         String author = ds.child("Author's Name").getValue().toString();
                         Log.d("fuck", author.toString());
