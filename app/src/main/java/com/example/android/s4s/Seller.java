@@ -8,12 +8,16 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Adapter;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.support.v7.app.AlertDialog;
 import android.content.DialogInterface;
 import android.widget.RatingBar;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.google.firebase.auth.FirebaseAuth;
@@ -42,6 +46,9 @@ import java.lang.String;
 import java.math.BigInteger;
 import java.net.URI;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+
 import android.content.ContentResolver;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -65,15 +72,18 @@ public class Seller extends AppCompatActivity {
 
     // ImageView uploadfront, uploadback;
     Button  button;
-    AlertDialog.Builder builder;
+    AlertDialog.Builder builder,builder3;
     Intent I;
     RatingBar rb;
 
-    EditText editText, editText2, editText3, editText4, editText5, editText7, editText8, editText9, editText10,editText11;
-    TextInputLayout name_layout, author_layout, phone1_layout, edition_layout, price_layout,publisher_layout,rating_layout,
-            locality_layout, district_layout, state_layout, pincode_layout, upload_layout,upload1_layout;
-    private DatabaseReference book_name, book_author, book_edition, book_publisher, book_price, book_rating,
-            sel_society, sel_district, sel_pincode, sel_phn, sel_state,flag;
+    EditText editText, editText2, editText3, editText4, editText5, editText7, editText8, editText9,
+            editText10,editText11;
+    TextInputLayout name_layout, author_layout, phone1_layout, edition_layout, price_layout,
+            publisher_layout, spinner_layout,rating_layout, locality_layout, district_layout,
+            state_layout, pincode_layout, upload_layout,upload1_layout;
+    private DatabaseReference book_name, book_author, book_edition, book_publisher, book_price,
+            book_rating, sel_society, sel_district, sel_pincode, sel_phn, sel_state,flag,
+            book_branch;
 
     private FirebaseDatabase databasebook;
     private FirebaseAuth mAuth;
@@ -96,20 +106,18 @@ public class Seller extends AppCompatActivity {
 
     private DatabaseReference databaseReference;
 
-    Bitmap bmap ;
-    Bitmap bmap1;
-    Bitmap myLogo;
-
     FirebaseUser currentFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
     //
     DatabaseReference data;
+    String item;
 
     //
     public static final String FB_STORAGE_PATH = "image/";
 
     public static final String FB_DATABASE_PATH = "image";
 
-    int i1;
+    int i1,x,y=0;
+    int z=0;
     String key;
     TextView tvplace;
     float rat=-1;
@@ -126,6 +134,7 @@ public class Seller extends AppCompatActivity {
 
         //uploadfront = (ImageView) findViewById(R.id.uploadfront);
         builder = new AlertDialog.Builder(this);
+        builder3 = new AlertDialog.Builder(this);
         // uploadback = (ImageView) findViewById(R.id.uploadback);
         //textView4 = (Button) findViewById(R.id.textView4);
         //textView5 = (Button) findViewById(R.id.textView5);
@@ -141,6 +150,7 @@ public class Seller extends AppCompatActivity {
         editText9 = (EditText) findViewById(R.id.editText9);
         editText10 = (EditText) findViewById(R.id.editText10);
         editText11 = (EditText) findViewById(R.id.editText11);
+        spinner_layout=findViewById(R.id.layout_branch);
         name_layout= findViewById(R.id.layout_name);
         author_layout = findViewById(R.id.layout_author);
         phone1_layout = findViewById(R.id.layout_phone_no);
@@ -154,16 +164,43 @@ public class Seller extends AppCompatActivity {
         upload_layout = findViewById(R.id.layout_upload1);
         upload1_layout = findViewById(R.id.layout_upload2);
         rating_layout=findViewById(R.id.layout_rating);
-        tvplace=(TextView)findViewById(R.id.tvplace);
+        //tvplace=(TextView)findViewById(R.id.tvplace);
 
 
-        //3c2
-        final ImageView test = (ImageView) findViewById (R.id.frontpic); //image stored here
-        final ImageView test1 = (ImageView) findViewById (R.id.backpic);
-        bmap = ((BitmapDrawable) test.getDrawable ()).getBitmap ();
-        bmap1 = ((BitmapDrawable) test1.getDrawable ()).getBitmap ();
-        Drawable myDrawable = getResources ().getDrawable (R.drawable.bookstoreicon);
-        myLogo = ((BitmapDrawable) myDrawable).getBitmap ();
+
+        //dropdown of branch
+        final Spinner spinner=(Spinner)findViewById(R.id.spinner);
+        List<String> branch=new ArrayList<>();
+        branch.add(0,"BRANCH");
+        branch.add("COMPUTER SCIENCE");
+        branch.add("MECHANICAL");
+        branch.add("ELECTRICAL");
+        branch.add("ELECTRONICS");
+        branch.add("INFORMATION TECHNOLOGY");
+        branch.add("CIVIL");
+        branch.add("MINING");
+        branch.add("METALLURGY");
+
+        ArrayAdapter<String> adapter =new ArrayAdapter(Seller.this, android.R.layout.simple_spinner_item, branch);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
+        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if(parent.getItemAtPosition(position).equals("BRANCH")){
+                    x=0;
+
+                }
+                else {
+                    item=parent.getItemAtPosition(position).toString();
+                    x=1;
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
 
 
         int i=index;
@@ -175,6 +212,7 @@ public class Seller extends AppCompatActivity {
         databaseReference = FirebaseDatabase.getInstance().getReference("Seller");
         key = databaseReference.push().getKey();
 
+        book_branch=databasebook.getReference("Seller").child(currentFirebaseUser.getUid()).child(String.valueOf(key)).child("BRANCH");
         book_name = databasebook.getReference("Seller").child(currentFirebaseUser.getUid()).child(String.valueOf(key)).child("Book Name");
         book_author = databasebook.getReference("Seller").child(currentFirebaseUser.getUid()).child(String.valueOf(key)).child("Author's Name");
         book_edition = databasebook.getReference("Seller").child(currentFirebaseUser.getUid()).child(String.valueOf(key)).child("Book Edition");
@@ -239,6 +277,8 @@ public class Seller extends AppCompatActivity {
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
+
                 if (editText.getText().toString().equals("")) {
                     name_layout.setError("Name of the book is req");
 
@@ -288,10 +328,7 @@ public class Seller extends AppCompatActivity {
 
                 }
 
-
-
-
-                if(!editText.getText().toString().equals("") && !editText2.getText().toString().equals("") &&
+                else if(!editText.getText().toString().equals("") && !editText2.getText().toString().equals("") &&
                         !editText3.getText().toString().equals("") && !editText4.getText().toString().equals("") &&
                         !editText5.getText().toString().equals("") && !editText7.getText().toString().equals("") &&
                         !editText8.getText().toString().equals("") && !editText9.getText().toString().equals("") &&
@@ -299,34 +336,49 @@ public class Seller extends AppCompatActivity {
                         isValidMobile(editText11) && isValidpincode(editText9)) {
 
                     builder.setMessage("add_for_sale").setTitle("add_for_sale");
-                    builder.setMessage("Do you want to sale the book??")
-                            .setCancelable(false)
+                    if(rb.getRating()==0){
+                        Toast.makeText(getApplicationContext(),"please Rate the book based on it's condition!",Toast.LENGTH_SHORT).show();
+                    }
+                    else if(x==0){
+                        Toast.makeText(getApplicationContext(),"please choose the branch of the book!",Toast.LENGTH_SHORT).show();
+                    }
+                    else if(y==0){
+                        Toast.makeText(getApplicationContext(),"please add the front page of the book!",Toast.LENGTH_SHORT).show();
+                    }
+                    else if(z==0){
+                        Toast.makeText(getApplicationContext(),"please add the back page of the book!",Toast.LENGTH_SHORT).show();
+                    }
 
-                            .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int id) {
-                                    finish();
+                    else {
+                        builder.setMessage("Do you want to sale the book Branch " + item + "??")
+                                .setCancelable(false)
 
-                                    addbook();
-                                    Toast.makeText(getApplicationContext(), "Book is added for sale!!",
-                                            Toast.LENGTH_SHORT).show();
-                                    openPayment(findViewById(R.id.button));
-                                    finish ();
-                                }
-                            })
-                            .setNegativeButton("No", new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int id) {
-                                    //  Action for 'NO' Button
-                                    dialog.cancel();
-                                    Toast.makeText(getApplicationContext(), "Book is not added for sale!",
-                                            Toast.LENGTH_SHORT).show();
-                                    Intent i = new Intent(Seller.this, Seller.class);
+                                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int id) {
+                                        finish();
 
-                                }
-                            });
-                    AlertDialog alert = builder.create();
-                    //Setting the title manually
-                    alert.setTitle("Confirm");
-                    alert.show();
+                                        addbook();
+                                        Toast.makeText(getApplicationContext(), "Book is added for sale!!",
+                                                Toast.LENGTH_SHORT).show();
+                                        openPayment(findViewById(R.id.button));
+                                        finish();
+                                    }
+                                })
+                                .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int id) {
+                                        //  Action for 'NO' Button
+                                        dialog.cancel();
+                                        Toast.makeText(getApplicationContext(), "Book is not added for sale!",
+                                                Toast.LENGTH_SHORT).show();
+                                        Intent i = new Intent(Seller.this, Seller.class);
+
+                                    }
+                                });
+                        AlertDialog alert = builder.create();
+                        //Setting the title manually
+                        alert.setTitle("Confirm");
+                        alert.show();
+                    }
 
                 }
 
@@ -374,11 +426,18 @@ public class Seller extends AppCompatActivity {
         sel_phn.setValue(editText11.getText().toString());
         //rb.setRating(rat);
         book_rating.setValue(rb.getRating());
+        book_branch.setValue(item);
         String value = "0";
         flag.setValue(value);
 
 
-
+        //3c2
+        final ImageView test = (ImageView) findViewById (R.id.frontpic); //image stored here
+        final ImageView test1 = (ImageView) findViewById (R.id.backpic);
+        final Bitmap bmap = ((BitmapDrawable) test.getDrawable ()).getBitmap ();
+        final Bitmap bmap1 = ((BitmapDrawable) test1.getDrawable ()).getBitmap ();
+        Drawable myDrawable = getResources ().getDrawable (R.drawable.bookstoreicon);
+        final Bitmap myLogo = ((BitmapDrawable) myDrawable).getBitmap ();
 
 
         if (bmap.sameAs (myLogo)) {
@@ -703,6 +762,8 @@ public class Seller extends AppCompatActivity {
 
                     Log.w("pery", picturePath + "");
                     viewImage.setImageBitmap(thumbnail);
+
+                    y=1;
                 }
                 if (i1 == 2) {
 
@@ -724,6 +785,8 @@ public class Seller extends AppCompatActivity {
 
                     Log.w("pery", picturePath + "");
                     viewImage2.setImageBitmap(thumbnail);
+
+                    z=1;
                 }
 
 
@@ -753,6 +816,9 @@ public class Seller extends AppCompatActivity {
 
         if(selectedImage != null)
         {
+
+            // name of the image in storage    currentFirebaseUser.getUid()+String.valueOf(key)
+
             StorageReference mstorage = storageReference.child (currentFirebaseUser.getUid()+String.valueOf(key)+"."+getFileextension (selectedImage));
 
             mstorage.putFile (selectedImage).addOnSuccessListener (new OnSuccessListener <UploadTask.TaskSnapshot> () {
@@ -854,3 +920,5 @@ public class Seller extends AppCompatActivity {
     }
 
 }
+
+
